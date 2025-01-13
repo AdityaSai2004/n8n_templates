@@ -1,0 +1,184 @@
+{
+  "name": "Unread emails",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 12
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 0],
+      "id": "da5f73c7-f16d-4808-9536-ffbd7612ff04",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "simple": false,
+        "filters": {
+          "readStatus": "unread",
+          "receivedAfter": "={{ new Date(new Date($json.timestamp).setDate(new Date($json.timestamp).getDate() - 1)).toISOString() }}",
+          "sender": "=!alerts@hdfcbank.net"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [240, 0],
+      "id": "7347cdf7-27df-483b-a568-399caab2977d",
+      "name": "Gmail",
+      "webhookId": "7456efce-332b-4f05-bcf9-1f1030ddf2e8",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.from.text }}{{ $json.text }}{{ $json.subject }}",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "I have the following unread email messages. Please summarize them concisely:|Instructions:Ignore emails that are empty or contain no meaningful content.Do not include information about attachments or unsubscribe buttons or social media links in the footer .For each relevant email, provide:The sender's name or organization .The subject.A brief summary of the email content.Any important actions or deadlines mentioned, if applicable.Ensure the response is structured and focused only on the meaningful content of the emails.\""
+            }
+          ]
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.5,
+      "position": [420, 0],
+      "id": "5f5cbcea-cbed-4518-afc6-4c48b7c49db0",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatMistralCloud",
+      "typeVersion": 1,
+      "position": [500, 220],
+      "id": "0ce40e27-575b-451d-a709-6d4a495f558a",
+      "name": "Mistral Cloud Chat Model",
+      "credentials": {
+        "mistralCloudApi": {
+          "id": "",
+          "name": "Mistral Cloud account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "",
+        "text": "=Hi this is your unread emails from yesterday\n{{ $json.combinedText }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [1040, 0],
+      "id": "23147b13-f109-431e-aaf4-5e057383ba22",
+      "name": "Telegram",
+      "credentials": {
+        "telegramApi": {
+          "id": "",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Loop over input items and combine the 'text' fields into a single field\nlet combinedText = '';\nfor (const item of $input.all()) {\n  combinedText += item.json.text + '\\n -------------------------- \\n';\n}\n\nreturn [{ json: { combinedText: combinedText.trim() } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [780, 0],
+      "id": "bf62c6d1-3f86-43a2-99d9-9388a85bcb90",
+      "name": "Code"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Gmail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mistral Cloud Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Kolkata",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "6bfeddcc-1896-4fd0-a6f5-08833ca0f1eb",
+  "meta": {
+    "instanceId": "9cca25f8e1f23c5cb9e5c08d5de6b6a20af51104e53d10f30943ef43e1dc5d07"
+  },
+  "id": "xIT9JPbXL8LLo4RX",
+  "tags": [
+    {
+      "createdAt": "2025-01-13T16:59:25.631Z",
+      "updatedAt": "2025-01-13T16:59:25.631Z",
+      "id": "CRKoMSWfPlxZPJZe",
+      "name": "tutorial"
+    }
+  ]
+}
