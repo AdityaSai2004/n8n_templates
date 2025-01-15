@@ -20,6 +20,7 @@
     {
       "parameters": {
         "operation": "getAll",
+        "limit": 10,
         "simple": false,
         "filters": {
           "readStatus": "unread",
@@ -30,13 +31,12 @@
       },
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.1,
-      "position": [240, 0],
+      "position": [680, 0],
       "id": "7347cdf7-27df-483b-a568-399caab2977d",
       "name": "Gmail",
       "webhookId": "7456efce-332b-4f05-bcf9-1f1030ddf2e8",
       "credentials": {
         "gmailOAuth2": {
-          "id": "",
           "name": "Gmail account"
         }
       }
@@ -48,14 +48,14 @@
         "messages": {
           "messageValues": [
             {
-              "message": "I have the following unread email messages. Please summarize them concisely:|Instructions:Ignore emails that are empty or contain no meaningful content.Do not include information about attachments or unsubscribe buttons or social media links in the footer .For each relevant email, provide:The sender's name or organization .The subject.A brief summary of the email content.Any important actions or deadlines mentioned, if applicable.Ensure the response is structured and focused only on the meaningful content of the emails.\""
+              "message": "I have the following unread email messages. Please summarize them concisely: Instructions:  Ignore emails that are empty or contain no meaningful content. Do not include information about attachments, unsubscribe buttons, or social media links in the footer. For each relevant email, provide: The sender's name or organization. The subject. A brief summary of the email content. Any important actions or deadlines mentioned, if applicable. Ensure the response is structured and focused only on the meaningful content of the emails."
             }
           ]
         }
       },
       "type": "@n8n/n8n-nodes-langchain.chainLlm",
       "typeVersion": 1.5,
-      "position": [420, 0],
+      "position": [860, 0],
       "id": "5f5cbcea-cbed-4518-afc6-4c48b7c49db0",
       "name": "Basic LLM Chain"
     },
@@ -65,30 +65,28 @@
       },
       "type": "@n8n/n8n-nodes-langchain.lmChatMistralCloud",
       "typeVersion": 1,
-      "position": [500, 220],
+      "position": [940, 220],
       "id": "0ce40e27-575b-451d-a709-6d4a495f558a",
       "name": "Mistral Cloud Chat Model",
       "credentials": {
         "mistralCloudApi": {
-          "id": "",
           "name": "Mistral Cloud account"
         }
       }
     },
     {
       "parameters": {
-        "chatId": "",
+        "chatId": "1392337390",
         "text": "=Hi this is your unread emails from yesterday\n{{ $json.combinedText }}",
         "additionalFields": {}
       },
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
-      "position": [1040, 0],
+      "position": [1480, 0],
       "id": "23147b13-f109-431e-aaf4-5e057383ba22",
       "name": "Telegram",
       "credentials": {
         "telegramApi": {
-          "id": "",
           "name": "Telegram account"
         }
       }
@@ -99,9 +97,88 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [780, 0],
+      "position": [1220, 0],
       "id": "bf62c6d1-3f86-43a2-99d9-9388a85bcb90",
       "name": "Code"
+    },
+    {
+      "parameters": {
+        "updates": ["message"],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.1,
+      "position": [-80, 360],
+      "id": "2aa25d10-cad9-4f62-9af0-fcec9ff5e0b5",
+      "name": "Telegram Trigger",
+      "webhookId": "f5c04b94-156d-4e4c-b8e9-365b60dda22c",
+      "credentials": {
+        "telegramApi": {
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "f0dad624-9dcc-4d25-99ec-bf9ecc72f127",
+              "leftValue": "={{ $json.message.text }}",
+              "rightValue": "Good morning",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            },
+            {
+              "id": "93424c42-8780-4690-a46b-048b57e0e7f1",
+              "leftValue": "={{ $json.message.text }}",
+              "rightValue": "good morning",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [120, 380],
+      "id": "73dfa36c-53eb-4ed0-9b04-17a58937af91",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dateTime",
+      "typeVersion": 2,
+      "position": [120, 200],
+      "id": "ccac6558-fd26-4212-a0fa-7141700a0f69",
+      "name": "Date & Time"
+    },
+    {
+      "parameters": {
+        "language": "python",
+        "pythonCode": "# Loop over input items and add a new field called 'myNewField' to the JSON of each one\nfor item in _input.all():\n  item.json.timestamp = item.json.currentDate\nreturn _input.all()"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [340, 200],
+      "id": "49e47936-5795-41da-a1eb-594c7d2c6bf0",
+      "name": "Code1"
     }
   ],
   "pinData": {},
@@ -160,6 +237,50 @@
           }
         ]
       ]
+    },
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Date & Time",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Date & Time": {
+      "main": [
+        [
+          {
+            "node": "Code1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code1": {
+      "main": [
+        [
+          {
+            "node": "Gmail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": true,
@@ -168,7 +289,7 @@
     "timezone": "Asia/Kolkata",
     "callerPolicy": "workflowsFromSameOwner"
   },
-  "versionId": "6bfeddcc-1896-4fd0-a6f5-08833ca0f1eb",
+  "versionId": "8afcf778-54fb-4c17-a81e-19b26c2c3c1a",
   "meta": {
     "instanceId": "9cca25f8e1f23c5cb9e5c08d5de6b6a20af51104e53d10f30943ef43e1dc5d07"
   },
